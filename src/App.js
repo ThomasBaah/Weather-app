@@ -1,20 +1,95 @@
 import React from 'react';
+import Navbar from './components/Navbar.js'
 import './App.css';
+import Axios from 'axios';
+import Displayweather from './components/Displayweather.js';
+import Login from './components/Login';
 
 class App extends React.Component {
 
+  //state
+  state = {
+    userPosition: {
+      latitude: 35,
+      longitude: 139
+    },
+    weather: {},
+    regionInput: " "
+  }
+
   componentDidMount() {
-    // get device location
-    if(navigator.geolocation) {
-      console.log("Supported")
-    }else{
-      console.log("not supported")
+    //check whether geolocation is supported
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(position => {
+
+        //get the lat and long of your device
+        let pos = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        }
+
+        this.setState({ userPosition: pos });
+
+        //Weather Api call
+        Axios.get(`http://api.weatherstack.com/current?access_key=ee2c00a09ba65e4467143d28625d3fa2&query=${this.state.userPosition.latitude},${this.state.userPosition.longitude}`).then(res => {
+          
+        let userWeather = {
+            temperature: res.data.current.temperature,
+            description: res.data.current.weather_descriptions[0],
+            location: res.data.location.name,
+            region: res.data.location.region,
+            country: res.data.location.country,
+            wind_speed: res.data.current.wind_speed,
+            pressure: res.data.current.pressure,
+            precip: res.data.current.precip,
+            humidity: res.data.current.humidity,
+            img: res.data.current.weather_icons
+          }
+
+          this.setState({ weather: userWeather });
+        })
+      })
     }
   }
-  render(){
-    this.return(
+
+  //update the value of the the input field with state
+  changeRegion=(value)=> {
+    this.setState({ regionInput: value })
+  }
+
+  //update the weather depending upon the value user entered
+  changeLocation = (e) => {
+
+    e.preventDefault()
+
+    Axios.get(`http://api.weatherstack.com/current?access_key=ee2c00a09ba65e4467143d28625d3fa2&query=${this.state.regionInput}`).then(res => {
+
+      let userWeather = {
+        temperature: res.data.current.temperature,
+        description: res.data.current.weather_descriptions[0],
+        location: res.data.location.name,
+        region: res.data.location.region,
+        country: res.data.location.country,
+        wind_speed: res.data.current.wind_speed,
+        pressure: res.data.current.pressure,
+        precip: res.data.current.precip,
+        humidity: res.data.current.humidity,
+        img: res.data.current.weather_icons
+      }
+
+      this.setState({ weather: userWeather });
+
+    })
+  }
+
+  render() {
+    return (
       <div className="App">
-        thomas
+        <div className="container">
+          <Navbar changeRegion={this.changeRegion} changeLocation={this.changeLocation} />
+          <Displayweather weather={this.state.weather} />
+          <Login />
+        </div>
       </div>
     );
   }
